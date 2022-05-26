@@ -858,6 +858,8 @@ class IEGMN(nn.Module):
         translations = []
         recs_keypts = []
         ligs_keypts = []
+        recs_feats_keypts = []
+        ligs_feats_keypts = []
         ligs_evolved = []
         ligs_node_idx = torch.cumsum(lig_graph.batch_num_nodes(), dim=0).tolist()
         ligs_node_idx.insert(0, 0)
@@ -937,9 +939,12 @@ class IEGMN(nn.Module):
                     lig_keypts += Z_lig_mean
             else:
                 lig_keypts = att_weights_lig @ Z_lig_coords  # K_heads, 3
-
+            lig_feats_keypts = att_weights_lig @ lig_feats
+            rec_feats_keypts = att_weights_rec @ rec_feats
             recs_keypts.append(rec_keypts)
             ligs_keypts.append(lig_keypts)
+            recs_feats_keypts.append(rec_feats_keypts)
+            ligs_feats_keypts.append(lig_feats_keypts)
 
             if torch.isnan(lig_keypts).any():
                 log(complex_names, 'complex_names where Nan encountered')
@@ -988,7 +993,7 @@ class IEGMN(nn.Module):
             else:
                 ligs_evolved.append(Z_lig_coords)
 
-        return [rotations, translations, ligs_keypts, recs_keypts, ligs_evolved, geom_losses]
+        return [rotations, translations, ligs_keypts, recs_keypts, ligs_evolved, geom_losses, rec_feats_keypts, ligs_feats_keypts]
 
     def __repr__(self):
         return "IEGMN " + str(self.__dict__)
@@ -1044,7 +1049,7 @@ class EquiBind(nn.Module):
                                                    start:end].mean(dim=0), '\n')
             predicted_ligs_coords_list.append(predicted_coords)
         #torch.save({'predictions': predicted_ligs_coords_list, 'names': complex_names})
-        return predicted_ligs_coords_list, outputs[2], outputs[3], outputs[0], outputs[1], outputs[5]
+        return predicted_ligs_coords_list, outputs[2], outputs[3], outputs[0], outputs[1], outputs[5], outpus[6], outputs[7]
 
     def __repr__(self):
         return "EquiBind " + str(self.__dict__)
