@@ -11,8 +11,8 @@ achieves significant speed-ups and better quality
 compared to traditional and recent baselines.
  If you have questions, don't hesitate to open an issue or ask me
 via [hstark@mit.edu](hstark@mit.edu)
-or [social media](https://hannes-stark.com/) or Octavian Ganea via [oct@mit.edu](oct@mit.edu). We are happy to hear from you!
-
+or [social media](https://hannes-stark.com/) or Octavian Ganea via [oct@mit.edu](oct@mit.edu). We are happy to hear from you!<br>
+The code is modified to extract keypoint representations to train downstream classifiers to check if the docking is valid or not.
 ![](.fig_intro.jpg)
 
 ![](.model2.jpg)
@@ -25,6 +25,7 @@ The files in `data` contain the names for the time-based data split.
 If you want to train one of our models with the data then: 
 1. download it from [zenodo](https://zenodo.org/record/6408497) 
 2. unzip the directory and place it into `data` such that you have the path `data/PDBBind`
+We also use [DUD-E](http://dude.docking.org/) dataset
 
 
 # Use provided model weights to predict binding structure of your own protein-ligand pairs:
