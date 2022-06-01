@@ -993,7 +993,7 @@ class IEGMN(nn.Module):
             else:
                 ligs_evolved.append(Z_lig_coords)
 
-        return [rotations, translations, ligs_keypts, recs_keypts, ligs_evolved, geom_losses, rec_feats_keypts, ligs_feats_keypts]
+        return rotations, translations, ligs_keypts, recs_keypts, ligs_evolved, geom_losses, rec_feats_keypts, ligs_feats_keypts
 
     def __repr__(self):
         return "IEGMN " + str(self.__dict__)
@@ -1019,7 +1019,7 @@ class EquiBind(nn.Module):
             else:
                 torch.nn.init.zeros_(p)
 
-    def forward(self, lig_graph, rec_graph, geometry_graph=None, complex_names=None, epoch=0):
+    def forward(self, lig_graph, rec_graph, geometry_graph=None, complex_names=None, epoch=0, output_keypoint_representation=False):
         if self.debug: log(complex_names)
         predicted_ligs_coords_list = []
         outputs = self.iegmn(lig_graph, rec_graph, geometry_graph, complex_names, epoch)
@@ -1049,7 +1049,10 @@ class EquiBind(nn.Module):
                                                    start:end].mean(dim=0), '\n')
             predicted_ligs_coords_list.append(predicted_coords)
         #torch.save({'predictions': predicted_ligs_coords_list, 'names': complex_names})
-        return predicted_ligs_coords_list, outputs[2], outputs[3], outputs[0], outputs[1], outputs[5], outpus[6], outputs[7]
+        if output_keypoint_representation == True:
+        	return predicted_ligs_coords_list, outputs[2], outputs[3], outputs[0], outputs[1], outputs[5], outputs[6], outputs[7]
+        else:
+        	return predicted_ligs_coords_list, outputs[2], outputs[3], outputs[0], outputs[1], outputs[5]
 
     def __repr__(self):
         return "EquiBind " + str(self.__dict__)
