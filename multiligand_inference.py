@@ -132,7 +132,7 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
     try:
         output = model(lig_graphs, rec_graphs, geometry_graphs, output_keypoint_representation=True)
         predictions = output[0]
-        rec_feat_keypts = output[-2][0].cpu().numpy()
+        rec_feat_keypts = output[-2].cpu().numpy()
         lig_feat_keypts = torch.cat(output[-1]).cpu().numpy()
         out_ligs = ligs
         out_lig_coords = lig_coords
@@ -156,9 +156,9 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
                 print(f"Failed for {lig.GetProp('_Name')}")
             else:
                 out_ligs.append(lig)
-                rec_feat_keypts = output[-2][0].cpu().numpy()
+                rec_feat_keypts = output[-2].cpu().numpy()
                 out_lig_coords.append(lig_coord)
-                lig_feat_keypts.append(output[-1][0].cpu().numpy())
+                lig_feat_keypts.append(output[-1].cpu().numpy())
                 predictions.append(output[0][0])
                 successes.append((true_index, lig.GetProp("_Name")))
         lig_feat_keypts = np.vstack(lig_feat_keypts)
@@ -202,8 +202,8 @@ def write_while_inferring(dataloader, model, args):
     full_output_path = os.path.join(args.output_directory, "output.sdf")
     full_failed_path = os.path.join(args.output_directory, "failed.txt")
     full_success_path = os.path.join(args.output_directory, "success.txt")
-    rec_feat_keypts_path = os.path.join(args.output_directory, 'rec_feat_keypts.pkl')
-    lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts.pkl')
+    rec_feat_keypts_path = os.path.join(args.output_directory, 'rec_feat_keypts')
+    lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts')
 
     w_or_a = "a" if args.skip_in_output else "w"
     rec_feat_keypts_saved = None
