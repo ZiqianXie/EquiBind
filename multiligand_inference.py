@@ -130,7 +130,10 @@ def load_rec_and_model(args):
 
 def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
     try:
-        predictions = model(lig_graphs, rec_graphs, geometry_graphs)[0]
+        output = model(lig_graphs, rec_graphs, geometry_graphs)
+        predictions = output[0]
+        rec_feat_keypts = output[-2]
+        lig_feat_keypts = output[-1]
         out_ligs = ligs
         out_lig_coords = lig_coords
         names = [lig.GetProp("_Name") for lig in ligs]
@@ -144,7 +147,6 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         out_lig_coords = []
         successes = []
         failures = []
-        rec_feat_keypts = None
         lig_feat_keypts = []
         for lig, lig_coord, lig_graph, rec_graph, geometry_graph, true_index in zip(ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
             try:
@@ -154,14 +156,14 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
                 print(f"Failed for {lig.GetProp('_Name')}")
             else:
                 out_ligs.append(lig)
-                if rec_feat_keypts is None:
-                    rec_feat_keypts = output[-2].cpu().numpy()
+                rec_feat_keypts = output[-2].cpu().numpy()
                 out_lig_coords.append(lig_coord)
                 lig_feat_keypts.append(output[-1].cpu().numpy())
                 predictions.append(output[0][0])
                 successes.append((true_index, lig.GetProp("_Name")))
+        lig_feat_keypts = np.vstack(lig_feat_keypts)
     assert len(predictions) == len(out_ligs)
-    return out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, np.vstack(lig_feat_keypts)
+    return out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts
 
 def run_corrections(lig, lig_coord, ligs_coords_pred_untuned):
     input_coords = lig_coord.detach().cpu()
