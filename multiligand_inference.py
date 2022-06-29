@@ -130,10 +130,10 @@ def load_rec_and_model(args):
 
 def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
     try:
-        output = model(lig_graphs, rec_graphs, geometry_graphs)
+        output = model(lig_graphs, rec_graphs, geometry_graphs, output_keypoint_representation=True)
         predictions = output[0]
-        rec_feat_keypts = output[-2].cpu().numpy()
-        lig_feat_keypts = output[-1].cpu().numpy()
+        rec_feat_keypts = output[-2][0].cpu().numpy()
+        lig_feat_keypts = torch.cat(output[-1]).cpu().numpy()
         out_ligs = ligs
         out_lig_coords = lig_coords
         names = [lig.GetProp("_Name") for lig in ligs]
@@ -150,15 +150,15 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         lig_feat_keypts = []
         for lig, lig_coord, lig_graph, rec_graph, geometry_graph, true_index in zip(ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
             try:
-                output = model(lig_graph, rec_graph, geometry_graph)
+                output = model(lig_graph, rec_graph, geometry_graph, output_keypoint_representation=True)
             except AssertionError as e:
                 failures.append((true_index, lig.GetProp("_Name")))
                 print(f"Failed for {lig.GetProp('_Name')}")
             else:
                 out_ligs.append(lig)
-                rec_feat_keypts = output[-2].cpu().numpy()
+                rec_feat_keypts = output[-2][0].cpu().numpy()
                 out_lig_coords.append(lig_coord)
-                lig_feat_keypts.append(output[-1].cpu().numpy())
+                lig_feat_keypts.append(output[-1][0].cpu().numpy())
                 predictions.append(output[0][0])
                 successes.append((true_index, lig.GetProp("_Name")))
         lig_feat_keypts = np.vstack(lig_feat_keypts)
