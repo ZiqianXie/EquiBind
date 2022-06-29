@@ -144,6 +144,8 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         out_lig_coords = []
         successes = []
         failures = []
+        rec_feat_keypts = None
+        lig_feat_keypts = []
         for lig, lig_coord, lig_graph, rec_graph, geometry_graph, true_index in zip(ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
             try:
                 output = model(lig_graph, rec_graph, geometry_graph)
@@ -152,11 +154,14 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
                 print(f"Failed for {lig.GetProp('_Name')}")
             else:
                 out_ligs.append(lig)
+                if rec_feat_keypts is None:
+                    rec_feat_keypts = output[-2].cpu().numpy()
                 out_lig_coords.append(lig_coord)
+                lig_feat_keypts.append(output[-1].cpu().numpy())
                 predictions.append(output[0][0])
                 successes.append((true_index, lig.GetProp("_Name")))
     assert len(predictions) == len(out_ligs)
-    return out_ligs, out_lig_coords, predictions, successes, failures
+    return out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, np.vstack(lig_feat_keypts)
 
 def run_corrections(lig, lig_coord, ligs_coords_pred_untuned):
     input_coords = lig_coord.detach().cpu()
@@ -195,6 +200,8 @@ def write_while_inferring(dataloader, model, args):
     full_output_path = os.path.join(args.output_directory, "output.sdf")
     full_failed_path = os.path.join(args.output_directory, "failed.txt")
     full_success_path = os.path.join(args.output_directory, "success.txt")
+    rec_feat_keypts_path = os.path.join(args.output_directory, 'rec_feat_keypts.pkl')
+    lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts.pkl')
 
     w_or_a = "a" if args.skip_in_output else "w"
     with torch.no_grad(), open(full_output_path, w_or_a) as file, open(
@@ -202,6 +209,7 @@ def write_while_inferring(dataloader, model, args):
         with Chem.SDWriter(file) as writer:
             i = 0
             total_ligs = len(dataloader.dataset)
+            lig_feat_keypts_list = []
             for batch in dataloader:
                 i += args.batch_size
                 print(f"Entering batch ending in index {min(i, total_ligs)}/{len(dataloader.dataset)}")
@@ -218,18 +226,23 @@ def write_while_inferring(dataloader, model, args):
                 geometry_graphs = geometry_graphs.to(args.device)
                 
                 
-                out_ligs, out_lig_coords, predictions, successes, failures = run_batch(model, ligs, lig_coords,
-                                                                                       lig_graphs, rec_graphs,
-                                                                                       geometry_graphs, true_indices)
+                out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
+                                                                                                                         lig_graphs, rec_graphs,
+                                                                                                                         geometry_graphs, true_indices)
+                lig_feat_keypts_list.append(lig_feat_keypts)
                 opt_mols = [run_corrections(lig, lig_coord, prediction) for lig, lig_coord, prediction in zip(out_ligs, out_lig_coords, predictions)]
                 for mol, success in zip(opt_mols, successes):
                     writer.write(mol)
                     success_file.write(f"{success[0]} {success[1]}")
                     success_file.write("\n")
+
                     # print(f"written {mol.GetProp('_Name')} to output")
                 for failure in failures:
                     failed_file.write(f"{failure[0]} {failure[1]}")
                     failed_file.write("\n")
+                np.save(rec_feat_keypts_path, rec_feat_keypts)
+                np.save(lig_feat_keypts_path, np.vstack(lig_feat_keypts_list))
+
 
 def main(arglist = None):
     args, cmdline_args = parse_arguments(arglist)
