@@ -204,6 +204,7 @@ def write_while_inferring(dataloader, model, args):
     lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts.pkl')
 
     w_or_a = "a" if args.skip_in_output else "w"
+    rec_feat_keypts_saved = None
     with torch.no_grad(), open(full_output_path, w_or_a) as file, open(
         full_failed_path, "a") as failed_file, open(full_success_path, w_or_a) as success_file:
         with Chem.SDWriter(file) as writer:
@@ -214,6 +215,8 @@ def write_while_inferring(dataloader, model, args):
                 i += args.batch_size
                 print(f"Entering batch ending in index {min(i, total_ligs)}/{len(dataloader.dataset)}")
                 ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices, failed_in_batch = batch
+                if rec_feat_keypts_saved is None:
+                    rec_feat_keypts_saved = rec_feat_keypts
                 for failure in failed_in_batch:
                     if failure[1] == "Skipped":
                         continue
@@ -226,7 +229,7 @@ def write_while_inferring(dataloader, model, args):
                 geometry_graphs = geometry_graphs.to(args.device)
                 
                 
-                out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
+                out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts_saved, lig_feat_keypts = run_batch(model, ligs, lig_coords,
                                                                                                                          lig_graphs, rec_graphs,
                                                                                                                          geometry_graphs, true_indices)
                 lig_feat_keypts_list.append(lig_feat_keypts)
