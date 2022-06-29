@@ -215,8 +215,6 @@ def write_while_inferring(dataloader, model, args):
                 i += args.batch_size
                 print(f"Entering batch ending in index {min(i, total_ligs)}/{len(dataloader.dataset)}")
                 ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices, failed_in_batch = batch
-                if rec_feat_keypts_saved is None:
-                    rec_feat_keypts_saved = rec_feat_keypts
                 for failure in failed_in_batch:
                     if failure[1] == "Skipped":
                         continue
@@ -229,9 +227,11 @@ def write_while_inferring(dataloader, model, args):
                 geometry_graphs = geometry_graphs.to(args.device)
                 
                 
-                out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts_saved, lig_feat_keypts = run_batch(model, ligs, lig_coords,
+                out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
                                                                                                                          lig_graphs, rec_graphs,
                                                                                                                          geometry_graphs, true_indices)
+                if rec_feat_keypts_saved is None:
+                    rec_feat_keypts_saved = rec_feat_keypts
                 lig_feat_keypts_list.append(lig_feat_keypts)
                 opt_mols = [run_corrections(lig, lig_coord, prediction) for lig, lig_coord, prediction in zip(out_ligs, out_lig_coords, predictions)]
                 for mol, success in zip(opt_mols, successes):
@@ -243,7 +243,7 @@ def write_while_inferring(dataloader, model, args):
                 for failure in failures:
                     failed_file.write(f"{failure[0]} {failure[1]}")
                     failed_file.write("\n")
-                np.save(rec_feat_keypts_path, rec_feat_keypts)
+                np.save(rec_feat_keypts_path, rec_feat_keypts_saved)
                 np.save(lig_feat_keypts_path, np.vstack(lig_feat_keypts_list))
 
 
