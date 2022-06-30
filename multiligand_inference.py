@@ -245,8 +245,8 @@ def write_while_inferring(dataloader, model, args):
                 for failure in failures:
                     failed_file.write(f"{failure[0]} {failure[1]}")
                     failed_file.write("\n")
-                np.save(rec_feat_keypts_path, rec_feat_keypts_saved)
-                np.save(lig_feat_keypts_path, np.vstack(lig_feat_keypts_list))
+            np.save(rec_feat_keypts_path, rec_feat_keypts_saved)
+            np.save(lig_feat_keypts_path, np.vstack(lig_feat_keypts_list))
 
 
 def main(arglist = None):
