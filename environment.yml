@@ -1,0 +1,29 @@
+name: equibind
+channels:
+  - conda-forge
+  - defaults
+  - dglteam
+  - pytorch
+dependencies:
+  - python=3.7
+  - torchvision
+  - cudatoolkit=11.3
+  - torchaudio
+  - pytorch-gpu 1.10
+  - dgl-cuda11.3
+  - rdkit
+  - openbabel
+  - biopython
+  - rdkit
+  - biopandas
+  - pot
+  - dgllife
+  - joblib
+  - pyaml
+  - icecream
+  - matplotlib
+  - tensorboard
+  - lxml
+  - psutil
+
+
