@@ -202,11 +202,10 @@ def write_while_inferring(dataloader, model, args):
     full_output_path = os.path.join(args.output_directory, "output.sdf")
     full_failed_path = os.path.join(args.output_directory, "failed.txt")
     full_success_path = os.path.join(args.output_directory, "success.txt")
-    rec_feat_keypts_path = os.path.join(args.output_directory, 'rec_feat_keypts')
-    lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts')
+    rec_feat_keypts_path = os.path.join(args.output_directory, 'rec_feat_keypts.npy')
+    lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts.npy')
 
     w_or_a = "a" if args.skip_in_output else "w"
-    rec_feat_keypts_saved = None
     with torch.no_grad(), open(full_output_path, w_or_a) as file, open(
         full_failed_path, "a") as failed_file, open(full_success_path, w_or_a) as success_file:
         with Chem.SDWriter(file) as writer:
@@ -232,8 +231,8 @@ def write_while_inferring(dataloader, model, args):
                 out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
                                                                                                                          lig_graphs, rec_graphs,
                                                                                                                          geometry_graphs, true_indices)
-                if rec_feat_keypts_saved is None:
-                    rec_feat_keypts_saved = rec_feat_keypts
+                if not os.path.exists(rec_feat_keypts_path):
+                    np.save(rec_feat_keypts_path, rec_feat_keypts)
                 lig_feat_keypts_list.append(lig_feat_keypts)
                 opt_mols = [run_corrections(lig, lig_coord, prediction) for lig, lig_coord, prediction in zip(out_ligs, out_lig_coords, predictions)]
                 for mol, success in zip(opt_mols, successes):
@@ -245,7 +244,6 @@ def write_while_inferring(dataloader, model, args):
                 for failure in failures:
                     failed_file.write(f"{failure[0]} {failure[1]}")
                     failed_file.write("\n")
-            np.save(rec_feat_keypts_path, rec_feat_keypts_saved)
             np.save(lig_feat_keypts_path, np.vstack(lig_feat_keypts_list))
 
 
