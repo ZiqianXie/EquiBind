@@ -237,7 +237,7 @@ def write_while_inferring(dataloader, model, args):
                                                                                                                          geometry_graphs, true_indices)
                 rec_feat_keypts_list.append(rec_feat_keypts)
                 lig_feat_keypts_list.append(lig_feat_keypts)
-                print(rec_feat_keypts.shape, lig_feat_keypts.shape)
+                # print(rec_feat_keypts.shape, lig_feat_keypts.shape)
                 opt_mols = [run_corrections(lig, lig_coord, prediction) for lig, lig_coord, prediction in zip(out_ligs, out_lig_coords, predictions)]
                 for mol, success in zip(opt_mols, successes):
                     writer.write(mol)
