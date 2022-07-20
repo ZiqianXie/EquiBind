@@ -133,7 +133,7 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         output = model(lig_graphs, rec_graphs, geometry_graphs, output_keypoint_representation=True)
         predictions = output[0]
         rec_feat_keypts = output[-2].cpu().numpy()
-        lig_feat_keypts = torch.cat(output[-1]).cpu().numpy()
+        lig_feat_keypts = output[-1].cpu().numpy()
         out_ligs = ligs
         out_lig_coords = lig_coords
         names = [lig.GetProp("_Name") for lig in ligs]
@@ -148,6 +148,7 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         successes = []
         failures = []
         lig_feat_keypts = []
+        rec_feat_keypts = []
         for lig, lig_coord, lig_graph, rec_graph, geometry_graph, true_index in zip(ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
             try:
                 output = model(lig_graph, rec_graph, geometry_graph, output_keypoint_representation=True)
@@ -159,9 +160,11 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
                 rec_feat_keypts = output[-2].cpu().numpy()
                 out_lig_coords.append(lig_coord)
                 lig_feat_keypts.append(output[-1].cpu().numpy())
+                rec_feat_keypts.append(output[-2].cpu().numpy())
                 predictions.append(output[0][0])
                 successes.append((true_index, lig.GetProp("_Name")))
         lig_feat_keypts = np.vstack(lig_feat_keypts)
+        rec_feat_keypts = np.vstack(rec_feat_keypts)
     assert len(predictions) == len(out_ligs)
     return out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts
 
@@ -233,8 +236,8 @@ def write_while_inferring(dataloader, model, args):
                                                                                                                          lig_graphs, rec_graphs,
                                                                                                                          geometry_graphs, true_indices)
                 rec_feat_keypts_list.append(rec_feat_keypts)
-                print(rec_feat_keypts.shape)
                 lig_feat_keypts_list.append(lig_feat_keypts)
+                print(rec_feat_keypts.shape, lig_feat_keypts.shape)
                 opt_mols = [run_corrections(lig, lig_coord, prediction) for lig, lig_coord, prediction in zip(out_ligs, out_lig_coords, predictions)]
                 for mol, success in zip(opt_mols, successes):
                     writer.write(mol)
