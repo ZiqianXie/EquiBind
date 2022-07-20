@@ -993,7 +993,7 @@ class IEGMN(nn.Module):
             else:
                 ligs_evolved.append(Z_lig_coords)
 
-        return rotations, translations, ligs_keypts, recs_keypts, ligs_evolved, geom_losses, rec_feats_keypts, ligs_feats_keypts
+        return rotations, translations, ligs_keypts, recs_keypts, ligs_evolved, geom_losses, recs_feats_keypts, ligs_feats_keypts
 
     def __repr__(self):
         return "IEGMN " + str(self.__dict__)

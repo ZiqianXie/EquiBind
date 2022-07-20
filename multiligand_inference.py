@@ -133,7 +133,7 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         output = model(lig_graphs, rec_graphs, geometry_graphs, output_keypoint_representation=True)
         predictions = output[0]
         rec_feat_keypts = output[-2].cpu().numpy()
-        lig_feat_keypts = output[-1].cpu().numpy()
+        lig_feat_keypts = torch.cat(output[-1]).cpu().numpy()
         out_ligs = ligs
         out_lig_coords = lig_coords
         names = [lig.GetProp("_Name") for lig in ligs]
