@@ -246,6 +246,8 @@ def write_while_inferring(dataloader, model, args):
                 out_ligs, out_lig_coords, predictions, successes, failures, lig_keypts, rec_keypts, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
                                                                                                                          lig_graphs, rec_graphs,
                                                                                                                          geometry_graphs, true_indices)
+                rec_keypts_list.append(rec_keypts)
+                lig_keypts_list.append(lig_keypts)
                 rec_feat_keypts_list.append(rec_feat_keypts)
                 lig_feat_keypts_list.append(lig_feat_keypts)
                 # print(rec_feat_keypts.shape, lig_feat_keypts.shape)
