@@ -148,7 +148,9 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
         successes = []
         failures = []
         lig_feat_keypts = []
+        lig_keypts = []
         rec_feat_keypts = []
+        rec_keypts = []
         for lig, lig_coord, lig_graph, rec_graph, geometry_graph, true_index in zip(ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, true_indices):
             try:
                 output = model(lig_graph, rec_graph, geometry_graph, output_keypoint_representation=True)
@@ -157,7 +159,8 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
                 print(f"Failed for {lig.GetProp('_Name')}")
             else:
                 out_ligs.append(lig)
-                rec_feat_keypts = output[-2].cpu().numpy()
+                lig_keypts.append(output[2].cpu().numpy())
+                rec_keypts.append(output[3].cpu().numpy())
                 out_lig_coords.append(lig_coord)
                 lig_feat_keypts.append(output[-1].cpu().numpy())
                 rec_feat_keypts.append(output[-2].cpu().numpy())
@@ -165,8 +168,10 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
                 successes.append((true_index, lig.GetProp("_Name")))
         lig_feat_keypts = np.vstack(lig_feat_keypts)
         rec_feat_keypts = np.vstack(rec_feat_keypts)
+        lig_keypts = np.vstack(lig_keypts)
+        rec_keypts = np.vstack(rec_keypts)
     assert len(predictions) == len(out_ligs)
-    return out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts
+    return out_ligs, out_lig_coords, predictions, successes, failures, lig_keypts, rec_keypts, rec_feat_keypts, lig_feat_keypts
 
 def run_corrections(lig, lig_coord, ligs_coords_pred_untuned):
     input_coords = lig_coord.detach().cpu()
@@ -207,6 +212,8 @@ def write_while_inferring(dataloader, model, args):
     full_success_path = os.path.join(args.output_directory, "success.txt")
     rec_feat_keypts_path = os.path.join(args.output_directory, 'rec_feat_keypts.npy')
     lig_feat_keypts_path = os.path.join(args.output_directory, 'lig_feat_keypts.npy')
+    lig_keypts_path = os.path.join(args.output_directory, 'lig_keypts.npy')
+    rec_keypts_path = os.path.join(args.output_directory, 'rec_keypts.npy')
 
     w_or_a = "a" if args.skip_in_output else "w"
     with torch.no_grad(), open(full_output_path, w_or_a) as file, open(
@@ -216,6 +223,8 @@ def write_while_inferring(dataloader, model, args):
             total_ligs = len(dataloader.dataset)
             lig_feat_keypts_list = []
             rec_feat_keypts_list = []
+            lig_keypts_list = []
+            rec_keypts_list = []
             for batch in dataloader:
                 i += args.batch_size
                 print(f"Entering batch ending in index {min(i, total_ligs)}/{len(dataloader.dataset)}")
@@ -232,7 +241,7 @@ def write_while_inferring(dataloader, model, args):
                 geometry_graphs = geometry_graphs.to(args.device)
                 
                 
-                out_ligs, out_lig_coords, predictions, successes, failures, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
+                out_ligs, out_lig_coords, predictions, successes, failures, lig_keypts, rec_keypts, rec_feat_keypts, lig_feat_keypts = run_batch(model, ligs, lig_coords,
                                                                                                                          lig_graphs, rec_graphs,
                                                                                                                          geometry_graphs, true_indices)
                 rec_feat_keypts_list.append(rec_feat_keypts)
@@ -250,6 +259,8 @@ def write_while_inferring(dataloader, model, args):
                     failed_file.write("\n")
             np.save(rec_feat_keypts_path, np.vstack(rec_feat_keypts_list))
             np.save(lig_feat_keypts_path, np.vstack(lig_feat_keypts_list))
+            np.save(rec_keypts_path, np.vstack(rec_keypts_list))
+            np.save(lig_keypts_path, np.vstack(lig_keypts_list))
 
 
 def main(arglist = None):
