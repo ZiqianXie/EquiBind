@@ -132,8 +132,8 @@ def run_batch(model, ligs, lig_coords, lig_graphs, rec_graphs, geometry_graphs, 
     try:
         output = model(lig_graphs, rec_graphs, geometry_graphs, output_keypoint_representation=True)
         predictions = output[0]
-        lig_keypts = torch.cat(output[2].cpu().numpy())
-        rec_keypts = torch.cat(output[3].cpu().numpy())
+        lig_keypts = torch.cat(output[2]).cpu().numpy()
+        rec_keypts = torch.cat(output[3]).cpu().numpy()
         rec_feat_keypts = torch.cat(output[-2]).cpu().numpy()
         lig_feat_keypts = torch.cat(output[-1]).cpu().numpy()
         out_ligs = ligs
